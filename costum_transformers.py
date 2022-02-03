@@ -1,10 +1,13 @@
-from sklearn.base import BaseEstimator, TransformerMixin
-import pandas as pd
 import numpy as np
+import pandas as pd
+from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.base import TransformerMixin
+from sklearn.utils import shuffle
+from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 
 
 class DegreesValuesFixer(BaseEstimator, TransformerMixin):
-    # trasforms values in degrees in their sinus.
+    # Transform values in degrees in their sinus.
     # Useful because 365 is far from 0, but sin365 is close to sin0
     def __init__(self):
         pass
@@ -33,10 +36,6 @@ class SubValueTrimmer(BaseEstimator, TransformerMixin):
         X[X < self.min_val] = self.min_val
         X[X > self.max_val] = self.max_val
         return X
-
-
-from sklearn.utils import shuffle
-from sklearn.base import BaseEstimator, RegressorMixin
 
 
 class PseudoLabeler(BaseEstimator, RegressorMixin):
@@ -139,3 +138,80 @@ class PseudoLabeler(BaseEstimator, RegressorMixin):
 
     def get_model_name(self):
         return self.model.__class__.__name__
+
+
+class BoostedHybrid(BaseEstimator, RegressorMixin):
+    """
+    #@url=https://www.kaggle.com/teckmengwong/tps2201-hybrid-time-series/notebook#Hybrid-Models
+    Linear regression excels at extrapolating trends, but can't learn interactions.
+    XGBoost excels at learning interactions, but can't extrapolate trends.
+    Apply the Second to the residual of the first, so to combine them
+    """
+
+    def __init__(self, model_1, model_2):
+        self.model_1 = model_1
+        self.model_2 = model_2
+        self.y_columns = None  # store column names from fit method
+
+    def fit(self, X, y):
+        """A reference implementation of a fitting function.
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The training input samples.
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs)
+            The target values (class labels in classification, real numbers in
+            regression).
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        X, y = check_X_y(X, y, accept_sparse=True)
+        # Train model_1
+        self.model_1.fit(X, y)
+
+        # Make predictions
+        y_fit = self.model_1.predict(X)
+        # Compute residuals
+        y_resid = y - y_fit
+
+        # Train model_2 on residuals , eval_set=[(X_1_valid, y_valid_resid)]
+        self.model_2.fit(X, y_resid)
+        # Model2 prediction
+        y_fit2 = self.model_2.predict(X)
+        # Compute noise
+        y_resid2 = y_resid - y_fit2
+
+        # Save data for question checking
+        self.y = y
+        self.y_fit = y_fit
+        self.y_resid = y_resid
+        self.y_fit2 = y_fit2
+        self.y_resid2 = y_resid2
+
+        self.is_fitted_ = True
+        return self
+
+    def predict(self, X):
+        """ A reference implementation of a predicting function.
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The training input samples.
+        Returns
+        -------
+        y : ndarray, shape (n_samples,)
+            Returns an array of ones.
+        """
+        X = check_array(X, accept_sparse=True)
+        check_is_fitted(self, 'is_fitted_')
+        # Predict with model_1
+        y_predict = self.model_1.predict(X)
+        # Add model_2 predictions to model_1 predictions
+        y_predict += self.model_2.predict(X)
+
+        return y_predict
+
+    def get_model_name(self):
+        self.__name__ = f'{self.model_1.__class__.__name__}_{self.model_2.__class__.__name__}'
