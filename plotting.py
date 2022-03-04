@@ -8,12 +8,18 @@ import seaborn as sns
 from scipy.stats import norm
 from scipy import stats
 
-def plot_correlation_matrix(frame: pd.DataFrame) -> None:
+"""
+Dedicated to plotting functionalities
+
+"""
+
+
+def plot_correlation_matrix(df: pd.DataFrame) -> None:
     """
     Plots a correlation matrix of Frame
-    :param frame:
+    :param df:
     """
-    corr_mat = frame.corr()
+    corr_mat = df.corr()
     plt.figure(figsize=(15, 10))
     mask = np.triu(corr_mat)
     sns.heatmap(corr_mat, cmap='RdBu_r', center=0.0, square=True, mask=mask)
@@ -21,78 +27,78 @@ def plot_correlation_matrix(frame: pd.DataFrame) -> None:
     plt.show()
 
 
-def plot_correlations(frame, cols):
+def plot_correlations(df: pd.DataFrame, cols: list) -> None:
     """
     Plot pairplots between columns = cols
-    :param frame:
+    :param df:
     :param cols:
     """
     sns.set()
-    sns.pairplot(frame[cols], size=2.5)
+    sns.pairplot(df[cols], height=2.5)
     plt.show()
 
 
-def plot_check_normality(frame, col):
+def plot_check_normality(df: pd.DataFrame, col: str):
     """
+    @url=https://www.kaggle.com/pmarcelino/comprehensive-data-exploration-with-python
     Check normality. Positive skewedness, NP.log. If many zeros, dummy variable (0/1) + np log where is not 0
-    :param frame: pd.Dataframe to check
+    :param df: pd.Dataframe to check
     :param col: Column to analyze
     """
-    # sns.distplot(frame[col], fit=norm)
-    sns.displot(frame[col])
-    fig = plt.figure()
-    res = stats.probplot(frame[col], plot=plt)
+    # sns.distplot(df[col], fit=norm)
+    fig = plt.figure(figsize=(16, 8))
+    ax = fig.add_subplot(1, 2, 1)
+    sns.histplot(df[col], ax=ax)
+    ax = fig.add_subplot(1, 2, 2)
+    res = stats.probplot(df[col], plot=ax)
+    plt.show()
 
 
-def plot_kdeplot_for_features(df:pd.DataFrame, ncols: int = 40):
+def plot_kdeplot_for_features(df: pd.DataFrame, maxcols: int = 40):
     """
-    Plots Kdeplots for ncols features in dataframe.
+    Plots Kdeplots for ncols features in df.
     :param df:
-    :param ncols:
+    :param maxcols:
     """
     # Visualizing first few rows
     numerical = df.columns[df.dtypes != "object"].to_numpy()
-    fig = plt.figure(figsize=(20, 50))
-    rows, cols = 10, 4
-    for idx, num in enumerate(numerical[:ncols]):
+    cols_to_plot = numerical[:maxcols]
+    rows, cols = int(np.ceil(len(cols_to_plot) / 4)), 4
+    fig = plt.figure(figsize=(20, rows * 10))
+
+    # fig = plt.figure(figsize=(20, 50))
+    # rows, cols = 10, 4
+    for idx, num in enumerate(numerical[:maxcols]):
         ax = fig.add_subplot(rows, cols, idx + 1)
         ax.grid(alpha=0.7, axis="both")
-        sns.kdeplot(x=num, fill=True, color='#50B2C0', linewidth=0.6, data=df, label="Train")
+        sns.kdeplot(x=num, fill=True, color='#50B2C0', linewidth=0.6, data=df, label=num)
         ax.set_xlabel(num)
         ax.legend()
     fig.tight_layout()
     fig.show()
 
 
-def plot_boxplots_for_features(data:pd.DataFrame):
+def plot_boxplots_for_features(df: pd.DataFrame, target: str):
     """
+    @url=https://www.kaggle.com/pmarcelino/comprehensive-data-exploration-with-python?scriptVersionId=19403046&cellId=24
     plots boxplots for n features
-    :param data:
+    :param target:
+    :param df:
     """
-    fig = plt.figure(figsize=(20, 50))
-    rows, cols = 10, 2
-    for idx in range(4):
-        y = idx
-        ax = fig.add_subplot(rows, cols, idx+1)
-        ax.grid(alpha = 0.7, axis ="both")
-        sns.boxplot(x="target",y=y,data=data)
-        ax.set_xlabel(y, fontsize=14)
-        ax.legend()
-        plt.xticks(rotation=60, fontsize=14)
-        plt.yticks(fontsize=14)
+    columns = [col for col in df.columns if col != target]
+    rows, cols = int(np.ceil(len(columns) / 2)), 2
+    fig = plt.figure(figsize=(20, rows * 10))
+    for idx, col in enumerate(columns):
+        single_data = pd.concat([df[target], df[col]], axis=1)
+        ax = fig.add_subplot(rows, cols, idx + 1)
+        sns.boxplot(x=col, y=target, data=single_data)
+    # fig.axis(ymin=0, ymax=800000)
+    # plt.xticks(rotation=90)
     fig.tight_layout()
     fig.show()
 
 
-def plotc(c1, c2, array):
-    fig = plt.figure(figsize=(16, 8))
-    sel = np.array(list(array))
-    plt.scatter(c1, c2, c=sel, s=100)
-    plt.xlabel(c1.name)
-    plt.ylabel(c2.name)
-
-
-def plot_periodogram(ts, detrend='linear', ax=None):
+def plot_periodogram(ts: pd.Series, detrend='linear', ax=None):
     """
     How many Fourier pairs should we actually include in our feature set?
     We can answer this question with the periodogram.
