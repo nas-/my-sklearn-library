@@ -20,12 +20,12 @@ def produce_model():
     )
 
 
-model = clf['model']
-kfold = KFold(n_splits=num_folds, random_state=seed)
-cv_scores = cross_val_score(model, X_train, Y_train, cv=kfold, scoring=scoring, verbose=0)
-
-model.fit(X_train, Y_train)
-prediction = model.predict(X_test)
-score = model.score(X_test, Y_test)
-clf['test_score'] = score
-print(clf['description'].rjust(30), f'train = {cv_scores.mean():.3f} ({cv_scores.std():.3f}), test = {score:.3f}\n')
+# model = clf['model']
+# kfold = KFold(n_splits=num_folds, random_state=seed)
+# cv_scores = cross_val_score(model, X_train, Y_train, cv=kfold, scoring=scoring, verbose=0)
+#
+# model.fit(X_train, Y_train)
+# prediction = model.predict(X_test)
+# score = model.score(X_test, Y_test)
+# clf['test_score'] = score
+# print(clf['description'].rjust(30), f'train = {cv_scores.mean():.3f} ({cv_scores.std():.3f}), test = {score:.3f}\n')
