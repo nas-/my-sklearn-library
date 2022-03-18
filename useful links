@@ -1,0 +1,10 @@
+Useful links and libraries
+
+
+Dimensionality reduction
+
+UMAP https://umap-learn.readthedocs.io/en/latest/index.html
+
+Open TSNE https://opentsne.readthedocs.io/en/latest/
+
+UMAP is slower than PCA, but way faster that TSNE Sklearn or OpenTSNE
