@@ -7,4 +7,6 @@ UMAP https://umap-learn.readthedocs.io/en/latest/index.html
 
 Open TSNE https://opentsne.readthedocs.io/en/latest/
 
+HDBSCAN https://hdbscan.readthedocs.io/en/latest/index.html
+
 UMAP is slower than PCA, but way faster that TSNE Sklearn or OpenTSNE
